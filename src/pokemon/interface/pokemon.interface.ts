@@ -1,5 +1,4 @@
 export interface Pokemon {
-  id: number;
   name: Name;
   type: string[];
   base: {
@@ -15,6 +14,7 @@ export interface Pokemon {
   evolution?: Evolution;
   profile: Profile;
   image: Image;
+  isOwn: boolean;
 }
 
 export interface Profile {

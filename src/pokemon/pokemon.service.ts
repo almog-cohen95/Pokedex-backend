@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PokemonRepository } from './pokemon.repository';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { Pokemon } from './interface/pokemon.interface';
-
 
 @Injectable()
 export class PokemonService {
-  constructor(@InjectModel('Pokemon') private pokemonModel: Model<Pokemon>) {}
+constructor(private readonly pokemonRepository: PokemonRepository) {}
 
-//   getAllPokemons() {
-//     return this.pokemonRepo.getAllPokemons();
-//   }
+  async getAllPokemons(): Promise<Pokemon[]> {
+    return this.pokemonRepository.findAllPokemons();
+  }
 
-   async getAllPokemons(): Promise<Pokemon[]> {
-    return this.pokemonModel.find().exec();
+  async getMyPokemons(isOwn: boolean): Promise<Pokemon[] > {
+    return this.pokemonRepository.findMyPokemons(isOwn);
+  }
+
+  async getPokemonById(_id: string): Promise<Pokemon | null> {
+    return this.pokemonRepository.findPokemonById(_id);
   }
 }

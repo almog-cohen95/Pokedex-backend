@@ -39,16 +39,15 @@
 
 // export const PokemonModelName = 'Pokemon';
 
-
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type PokemonDocument = Pokemon & Document;
 
-@Schema()
+@Schema({collection: 'pokemon'})
 export class Pokemon {
-  @Prop({ required: true })
-  id: number;
+  // @Prop({ required: true })
+  // id: number;
 
   @Prop({
     type: {
@@ -133,6 +132,9 @@ export class Pokemon {
     thumbnail: string;
     hires: string;
   };
+
+  @Prop({ required: true })
+  isOwn: Boolean;
 }
 
 export const PokemonSchema = SchemaFactory.createForClass(Pokemon);

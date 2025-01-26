@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PokemonController } from './pokemon.controller';
+import { AllPokemonController, MyPokemonController } from './pokemon.controller';
 import { PokemonService } from './pokemon.service';
 import { PokemonRepository } from './pokemon.repository';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -17,10 +17,11 @@ import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
         uri: config.get<string>('MONGODB_URI'),
+        dbName: config.get<string>('MONGODB'),
       }),
     }),
   ],
-  controllers: [PokemonController],
+  controllers: [AllPokemonController, MyPokemonController],
   providers: [PokemonService, PokemonRepository],
 })
 export class PokemonModule {}
