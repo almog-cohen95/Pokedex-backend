@@ -4,11 +4,14 @@ import { PokemonService } from './pokemon.service';
 import { PokemonRepository } from './pokemon.repository';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PokemonModelName, PokemonSchema } from './schemas/pokemon.schema';
+import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: PokemonModelName, schema: PokemonSchema }]),
+    ConfigModule.forRoot({
+      isGlobal: true, 
+    }),
+    MongooseModule.forFeature([{ name: Pokemon.name, schema: PokemonSchema }]),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
