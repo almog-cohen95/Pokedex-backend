@@ -11,7 +11,6 @@ export class AllPokemonController {
   }
 }
 
-
 @Controller('my-pokemons')
 export class MyPokemonController {
   constructor(public pokemonService: PokemonService) {}
@@ -24,5 +23,15 @@ export class MyPokemonController {
   @Get(':id')
   getPokemonById(@Param('id') id: string) {
     return this.pokemonService.getPokemonById(id);
+  }
+}
+
+@Controller('fight')
+export class FightController {
+  constructor(public pokemonService: PokemonService) {}
+
+  @Get()
+  getSwitchPokemons(@Query('exclude') exclude: string) {
+    return this.pokemonService.getAvailablePokemons(exclude);
   }
 }

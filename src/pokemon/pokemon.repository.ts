@@ -18,4 +18,9 @@ export class PokemonRepository {
   async findPokemonById(id: string) {
     return this.pokemonModel.findById(id).exec();
   }
+
+  async findAvailablePokemonsSwitch(exclude: string) {
+    const filter = exclude ? { _id: { $ne: exclude }, isOwn: true } : {}; 
+    return this.pokemonModel.find(filter).exec();
+  }
 }

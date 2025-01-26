@@ -17,4 +17,8 @@ constructor(private readonly pokemonRepository: PokemonRepository) {}
   async getPokemonById(_id: string): Promise<Pokemon | null> {
     return this.pokemonRepository.findPokemonById(_id);
   }
+
+ async getAvailablePokemons(exclude: string): Promise<Pokemon[]> {
+    return this.pokemonRepository.findAvailablePokemonsSwitch(exclude);
+  }
 }
