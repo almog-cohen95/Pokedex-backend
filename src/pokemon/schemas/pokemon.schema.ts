@@ -3,15 +3,14 @@ import { Document } from 'mongoose';
 
 export type PokemonDocument = Pokemon & Document;
 
-@Schema({collection: 'pokemon'})
+@Schema({ collection: 'pokemon' })
 export class Pokemon {
-
   @Prop({
     type: {
-      english: String,
-      japanese: String,
-      chinese: String,
-      french: String,
+      english: { type: String, required: true },
+      japanese: { type: String, required: true },
+      chinese: { type: String, required: true },
+      french: { type: String, required: true },
     },
   })
   name: {
@@ -21,17 +20,17 @@ export class Pokemon {
     french: string;
   };
 
-  @Prop([String])
+  @Prop({ type: [String], required: true })
   type: string[];
 
   @Prop({
     type: {
-      HP: Number,
-      Attack: Number,
-      Defense: Number,
-      SpAttack: Number,
-      SpDefense: Number,
-      Speed: Number,
+      HP: { type: Number, required: true },
+      Attack: { type: Number, required: true },
+      Defense: { type: Number, required: true },
+      SpAttack: { type: Number, required: true },
+      SpDefense: { type: Number, required: true },
+      Speed: { type: Number, required: true },
     },
   })
   base: {
@@ -43,10 +42,10 @@ export class Pokemon {
     Speed: number;
   };
 
-  @Prop()
+  @Prop({ required: true })
   species: string;
 
-  @Prop()
+  @Prop({ required: true })
   description: string;
 
   @Prop({
@@ -62,11 +61,11 @@ export class Pokemon {
 
   @Prop({
     type: {
-      height: String,
-      weight: String,
+      height: { type: String, required: true },
+      weight: { type: String, required: true },
       egg: [String],
-      ability: [[String]],
-      gender: String,
+      ability: { type: [[String]], required: true },
+      gender: { type: String, required: true },
     },
   })
   profile: {
@@ -79,8 +78,8 @@ export class Pokemon {
 
   @Prop({
     type: {
-      sprite: String,
-      thumbnail: String,
+      sprite: { type: String, required: true },
+      thumbnail: { type: String, required: true },
       hires: String,
     },
   })
