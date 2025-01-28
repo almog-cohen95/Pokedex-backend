@@ -90,10 +90,7 @@ export class PokemonService {
     }
   }
 
-  async getPokemonsForFight(query: {
-    enemyPokemon: object;
-    userPokemon: object;
-  }): Promise<Pokemon | null> { //TODO
+  async getPokemonsForFight(userPokemonId: number): Promise<Pokemon | null> { //TODO
     try {
       const { enemyPokemon, userPokemon } = query;
 
