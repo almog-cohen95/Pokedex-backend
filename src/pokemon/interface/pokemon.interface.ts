@@ -1,20 +1,22 @@
 export interface Pokemon {
   name: Name;
   type: string[];
-  base: {
-    HP: number;
-    Attack: number;
-    Defense: number;
-    SpAttack: number;
-    SpDefense: number;
-    Speed: number;
-  };
+  base: Base;
   species: string;
   description: string;
   evolution?: Evolution;
   profile: Profile;
   image: Image;
   isOwn: boolean;
+}
+
+export interface Base {
+    HP: number
+    Attack: number
+    Defense: number
+    SpAttack: number
+    SpDefense: number
+    Speed: number
 }
 
 export interface Profile {
