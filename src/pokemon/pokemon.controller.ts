@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
 import { Pokemon } from './interface/pokemon.interface';
+import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 
 @Controller('all-pokemons')
 export class AllPokemonController {
@@ -17,14 +18,13 @@ export class AllPokemonController {
 
   @Get()
   async getPokemons(
-    @Query('sortBy') sortBy: string = 'alphabeticallyA-Z',
-    @Query('isOwn') isOwn?: string,
-    @Query('nameSearch') nameSearch?: string,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
+    @Query() query: GetPokemonsQueryDto,
   ): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
+
+    const { sortBy,sortType, isOwn, nameSearch, page, pageSize } = query;
+
     this.logger.log(
-      `Received request with query: sortBy=${sortBy}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
+      `Received request with query: sortBy=${sortBy}, sortType=${sortType}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
     );
 
     const isOwnBoolean =
@@ -33,6 +33,7 @@ export class AllPokemonController {
     try {
       const result = await this.pokemonService.getPokemons({
         sortBy,
+        sortType,
         isOwn: isOwnBoolean,
         nameSearch,
         page,
@@ -69,45 +70,50 @@ export class AllPokemonController {
   }
 }
 
-@Controller('my-pokemons')
-export class MyPokemonController {
-  private readonly logger = new Logger(AllPokemonController.name);
-  constructor(public pokemonService: PokemonService) {}
+//------------------------------------------------------------------------
+//TODO - check if delete this
 
-  @Get()
-  async getPokemons(
-    @Query('sortBy') sortBy: string = 'alphabeticallyA-Z',
-    @Query('isOwn') isOwn?: string,
-    @Query('nameSearch') nameSearch?: string,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
-  ): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
-    this.logger.log(
-      `Received request with query: sortBy=${sortBy}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
-    );
+// @Controller('my-pokemons')
+// export class MyPokemonController {
+//   private readonly logger = new Logger(AllPokemonController.name);
+//   constructor(public pokemonService: PokemonService) {}
 
-    const isOwnBoolean =
-      isOwn === 'true' ? true : isOwn === 'false' ? false : undefined;
+//   @Get()
+//   async getPokemons(
+//     @Query('sortBy') sortBy: string = 'alphabeticallyA-Z',
+//     @Query('isOwn') isOwn?: string,
+//     @Query('nameSearch') nameSearch?: string,
+//     @Query('page') page: number = 1,
+//     @Query('pageSize') pageSize: number = 10,
+//   ): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
 
-    try {
-      const result = await this.pokemonService.getPokemons({
-        sortBy,
-        isOwn: isOwnBoolean,
-        nameSearch,
-        page,
-        pageSize,
-      });
-      this.logger.log(
-        `Successfully fetched ${result.pokemons.length} pokemons, total count: ${result.totalCount}`,
-      );
+//     this.logger.log(
+//       `Received request with query: sortBy=${sortBy},sortType=${sortType}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
+//     );
 
-      return result;
-    } catch (error) {
-      this.logger.error('Error fetching pokemons', error.stack);
-      throw new HttpException(
-        'Failed to get pokemons',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-}
+//     const isOwnBoolean =
+//       isOwn === 'true' ? true : isOwn === 'false' ? false : undefined;
+
+//     try {
+//       const result = await this.pokemonService.getPokemons({
+//         sortBy,
+//         sortType,
+//         isOwn: isOwnBoolean,
+//         nameSearch,
+//         page,
+//         pageSize,
+//       });
+//       this.logger.log(
+//         `Successfully fetched ${result.pokemons.length} pokemons, total count: ${result.totalCount}`,
+//       );
+
+//       return result;
+//     } catch (error) {
+//       this.logger.error('Error fetching pokemons', error.stack);
+//       throw new HttpException(
+//         'Failed to get pokemons',
+//         HttpStatus.INTERNAL_SERVER_ERROR,
+//       );
+//     }
+//   }
+// }

@@ -10,31 +10,33 @@ export class PokemonService {
 
   async getPokemons(query: {
     sortBy: string;
+    sortType: string;
     isOwn?: boolean;
     nameSearch?: string;
     page: number;
     pageSize: number;
   }): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
-    const { sortBy, isOwn, nameSearch, page, pageSize } = query;
+    const { sortBy, sortType, isOwn, nameSearch, page, pageSize } = query;
     this.logger.log(`Fetching pokemons with query: ${JSON.stringify(query)}`);
 
     const skip = (page - 1) * pageSize;
     const limit = pageSize;
 
-    let sort: any = {};
-    if (sortBy === 'alphabeticallyA-Z') {
-      sort = { id: 1 ,'name.english': 1};
-    } else if (sortBy === 'alphabeticallyZ-A') {
-      sort = { 'name.english': -1 };
-    } else if (sortBy === 'HP_l') {
-      sort = { 'base.HP': 1 };
-    } else if (sortBy === 'HP_h') {
-      sort = { 'base.HP': -1 };
-    } else if (sortBy === 'Power_l') {
-      sort = { 'base.Attack': 1 };
-    } else if (sortBy === 'Power_h') {
-      sort = { 'base.Attack': -1 };
-    }
+    const sortByConst: Record<string, string> = {
+      name: 'name.english',
+      hp: 'base.HP',
+      attack: 'base.Attack',
+    };
+
+    const sortOrderConst: Record<string, number> = {
+      asc: 1,
+      desc: -1,
+    };
+
+    const sortByField = sortByConst[sortBy];
+    const sortOrder = sortOrderConst[sortType];
+
+    const sort: Record<string, number> = { [sortByField]: sortOrder };
 
     const filter: Record<string, any> = {};
 
@@ -75,7 +77,7 @@ export class PokemonService {
     }
   }
 
-    async getPokemonById(id: string): Promise<Pokemon | null> {
+  async getPokemonById(id: string): Promise<Pokemon | null> {
     try {
       this.logger.log(`Get pokemon with ID: ${id}`);
       const pokemonId = await this.pokemonRepository.findPokemonById(id);
@@ -90,5 +92,3 @@ export class PokemonService {
     }
   }
 }
-
-
