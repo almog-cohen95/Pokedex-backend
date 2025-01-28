@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AllPokemonController } from './pokemon.controller';
+import { AllPokemonController, MyPokemonController } from './pokemon.controller';
 import { PokemonService } from './pokemon.service';
 import { PokemonRepository } from './pokemon.repository';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -21,7 +21,7 @@ import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
       }),
     }),
   ],
-  controllers: [AllPokemonController],
+  controllers: [AllPokemonController, MyPokemonController],
   providers: [PokemonService, PokemonRepository],
 })
 export class PokemonModule {}
