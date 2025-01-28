@@ -114,10 +114,34 @@ export class MyPokemonController {
 
 @Controller('fight')
 export class FightController {
+    private readonly logger = new Logger(AllPokemonController.name);
   constructor(public pokemonService: PokemonService) {}
 
-  @Get()
-  getSwitchPokemons(@Query('exclude') exclude: string) {
-    return this.pokemonService.getAvailablePokemons(exclude);
+@Get()
+  async getPokemonsForFight(
+    @Query('userPokemon') userPokemon: string,
+    @Query('enemyPokemon') enemyPokemon?: string,
+  ): Promise<{ pokemons: Pokemon[]; }> {
+
+    try {
+      const result = await this.pokemonService.getPokemonsForFight({
+        userPokemon,
+        enemyPokemon
+      });
+
+      return result;
+      
+    } catch (error) {
+      this.logger.error('Error fetching pokemons', error.stack);
+      throw new HttpException(
+        'Failed to get pokemons',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
+
+  // @Get()
+  // getSwitchPokemons(@Query('exclude') exclude: string) {
+  //   return this.pokemonService.getAvailablePokemons(exclude);
+  // }
 }

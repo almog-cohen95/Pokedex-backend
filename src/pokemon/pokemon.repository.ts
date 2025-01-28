@@ -54,9 +54,9 @@ export class PokemonRepository {
     }
   }
 
-  async findAvailablePokemonsSwitch(exclude: string) {
-    const filter = exclude ? { _id: { $ne: exclude }, isOwn: true } : {}; 
-    return this.pokemonModel.find(filter).exec();
-  }
+  // async findAvailablePokemonsSwitch(exclude: string) {
+  //   const filter = exclude ? { _id: { $ne: exclude }, isOwn: true } : {}; 
+  //   return this.pokemonModel.find(filter).exec();
+  // }
 }
 

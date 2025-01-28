@@ -23,7 +23,7 @@ export class PokemonService {
 
     let sort: any = {};
     if (sortBy === 'alphabeticallyA-Z') {
-      sort = { id: 1 ,'name.english': 1};
+      sort = { id: 1, 'name.english': 1 };
     } else if (sortBy === 'alphabeticallyZ-A') {
       sort = { 'name.english': -1 };
     } else if (sortBy === 'HP_l') {
@@ -75,7 +75,7 @@ export class PokemonService {
     }
   }
 
-    async getPokemonById(id: string): Promise<Pokemon | null> {
+  async getPokemonById(id: string): Promise<Pokemon | null> {
     try {
       this.logger.log(`Get pokemon with ID: ${id}`);
       const pokemonId = await this.pokemonRepository.findPokemonById(id);
@@ -90,9 +90,22 @@ export class PokemonService {
     }
   }
 
- async getAvailablePokemons(exclude: string): Promise<Pokemon[]> {
-    return this.pokemonRepository.findAvailablePokemonsSwitch(exclude);
+  async getPokemonsForFight(query: {
+    enemyPokemon: object;
+    userPokemon: object;
+  }): Promise<Pokemon | null> { //TODO
+    try {
+      const { enemyPokemon, userPokemon } = query;
+
+      let getEnemyPokemon: any = [
+        { $match: { isOwn: false } },
+        { $sample: { size: 1 } },
+      ];
+      return getEnemyPokemon;
+    } catch (error) {}
   }
+
+  //  async getAvailablePokemons(exclude: string): Promise<Pokemon[]> {
+  //     return this.pokemonRepository.findAvailablePokemonsSwitch(exclude);
+  //   }
 }
-
-
