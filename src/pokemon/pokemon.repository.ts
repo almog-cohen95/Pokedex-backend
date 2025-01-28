@@ -14,11 +14,11 @@ export class PokemonRepository {
   constructor(@InjectModel('Pokemon') private pokemonModel: Model<Pokemon>) {}
 
   async findPokemons(query: {
-    sort: string;
+    sort: Record<string, 'asc' | 'desc'>;
     filter?: Record<string, any>;
     skip: number;
     limit: number;
-  }): Promise<{ pokemons: Pokemon[]; totalCount: number }> {
+  }): Promise<{ data: Pokemon[]; total: number }> {
     try {
       this.logger.log('Executing findPokemons query', query);
 
@@ -28,6 +28,7 @@ export class PokemonRepository {
         .skip(query.skip)
         .limit(query.limit)
         .exec();
+
       const totalCount = await this.pokemonModel
         .countDocuments(query.filter || {})
         .exec();
@@ -35,7 +36,9 @@ export class PokemonRepository {
       this.logger.log(
         `Found ${pokemons.length} pokemons, total count: ${totalCount}`,
       );
-      return { pokemons, totalCount };
+      
+      return { data: pokemons, total: totalCount };
+
     } catch (error) {
       this.logger.error('Error while fetching pokemons', error.stack);
       throw new InternalServerErrorException(

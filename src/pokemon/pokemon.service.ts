@@ -1,6 +1,10 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PokemonRepository } from './pokemon.repository';
 import { Pokemon } from './interface/pokemon.interface';
+import {
+  POKEMON_NAME_ENGLISH,
+} from './constants';
+import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 
 @Injectable()
 export class PokemonService {
@@ -8,14 +12,9 @@ export class PokemonService {
 
   constructor(private readonly pokemonRepository: PokemonRepository) {}
 
-  async getPokemons(query: {
-    sortBy: string;
-    sortType: string;
-    isOwn?: boolean;
-    nameSearch?: string;
-    page: number;
-    pageSize: number;
-  }): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
+  async getPokemons(
+    query: GetPokemonsQueryDto,
+  ): Promise<{ data: Pokemon[]; total: number; message?: string }> {
     const { sortBy, sortType, isOwn, nameSearch, page, pageSize } = query;
     this.logger.log(`Fetching pokemons with query: ${JSON.stringify(query)}`);
 
@@ -25,27 +24,38 @@ export class PokemonService {
     const sortByConst: Record<string, string> = {
       name: 'name.english',
       hp: 'base.HP',
-      attack: 'base.Attack',
+      power: 'base.Attack',
     };
 
-    const sortOrderConst: Record<string, number> = {
-      asc: 1,
-      desc: -1,
+    const sortOrderConst: Record<string, 'asc' | 'desc'> = {
+      asc: 'asc',
+      desc: 'desc',
+    };
+
+    const defaultSort: Record<string, 'asc' | 'desc'> = {
+      id: 'asc',
+      'name.english': 'asc',
     };
 
     const sortByField = sortByConst[sortBy];
     const sortOrder = sortOrderConst[sortType];
 
-    const sort: Record<string, number> = { [sortByField]: sortOrder };
+    let sort: Record<string, 'asc' | 'desc'> = {};
+
+    if (sortByField) {
+      sort[sortByField] = sortOrder;
+    } else {
+      sort = { ...defaultSort };
+    }
 
     const filter: Record<string, any> = {};
 
-    if (isOwn !== undefined) {
+    if (isOwn) {
       filter.isOwn = isOwn;
     }
 
     if (nameSearch) {
-      filter['name.english'] = { $regex: nameSearch, $options: 'i' };
+      filter[POKEMON_NAME_ENGLISH] = { $regex: nameSearch, $options: 'i' };
     }
     try {
       const result = await this.pokemonRepository.findPokemons({
@@ -55,16 +65,16 @@ export class PokemonService {
         limit,
       });
 
-      if (result.pokemons.length === 0) {
+      if (result.data.length === 0) {
         return {
-          pokemons: [],
-          totalCount: 0,
+          data: [],
+          total: 0,
           message: 'No Pokemons were found',
         };
       }
 
       this.logger.log(
-        `Successfully fetched ${result.pokemons.length} pokemons, total count: ${result.totalCount}`,
+        `Successfully fetched ${result.data.length} pokemons, total count: ${result.total}`,
       );
 
       return result;

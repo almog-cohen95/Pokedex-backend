@@ -14,7 +14,7 @@ export class GetPokemonsQueryDto {
 
   @IsOptional()
   @IsString()
-  isOwn?: string;
+  isOwn?: boolean = false;
 
   @IsOptional()
   @IsString()
