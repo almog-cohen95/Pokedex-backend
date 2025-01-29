@@ -2,7 +2,10 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PokemonRepository } from './pokemon.repository';
 import { Pokemon } from './interface/pokemon.interface';
 import {
+  defaultSort,
   POKEMON_NAME_ENGLISH,
+  sortByConst,
+  sortOrderConst,
 } from './constants';
 import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 
@@ -21,21 +24,7 @@ export class PokemonService {
     const skip = (page - 1) * pageSize;
     const limit = pageSize;
 
-    const sortByConst: Record<string, string> = {
-      name: 'name.english',
-      hp: 'base.HP',
-      power: 'base.Attack',
-    };
-
-    const sortOrderConst: Record<string, 'asc' | 'desc'> = {
-      asc: 'asc',
-      desc: 'desc',
-    };
-
-    const defaultSort: Record<string, 'asc' | 'desc'> = {
-      id: 'asc',
-      'name.english': 'asc',
-    };
+    
 
     const sortByField = sortByConst[sortBy];
     const sortOrder = sortOrderConst[sortType];
@@ -65,7 +54,7 @@ export class PokemonService {
         limit,
       });
 
-      if (result.data.length === 0) {
+      if (!result.data.length) {
         return {
           data: [],
           total: 0,
