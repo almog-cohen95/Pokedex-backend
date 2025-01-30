@@ -9,37 +9,34 @@ import {
 } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
 import { Pokemon } from './interface/pokemon.interface';
+import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 
-@Controller('all-pokemons')
+@Controller('pokemons')
 export class AllPokemonController {
   private readonly logger = new Logger(AllPokemonController.name);
   constructor(public pokemonService: PokemonService) {}
 
   @Get()
   async getPokemons(
-    @Query('sortBy') sortBy: string = 'alphabeticallyA-Z',
-    @Query('isOwn') isOwn?: string,
-    @Query('nameSearch') nameSearch?: string,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
-  ): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
-    this.logger.log(
-      `Received request with query: sortBy=${sortBy}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
-    );
+    @Query() query: GetPokemonsQueryDto,
+  ): Promise<{ data: Pokemon[]; total: number; message?: string }> {
+    const { sortBy, sortType, isOwn, nameSearch, page, pageSize } = query;
 
-    const isOwnBoolean =
-      isOwn === 'true' ? true : isOwn === 'false' ? false : undefined;
+    this.logger.log(
+      `Received request with query: sortBy=${sortBy}, sortType=${sortType}, isOwn=${isOwn}, nameSearch=${nameSearch}, page=${page}, pageSize=${pageSize}`,
+    );
 
     try {
       const result = await this.pokemonService.getPokemons({
         sortBy,
-        isOwn: isOwnBoolean,
+        sortType,
+        isOwn,
         nameSearch,
         page,
         pageSize,
       });
       this.logger.log(
-        `Successfully fetched ${result.pokemons.length} pokemons, total count: ${result.totalCount}`,
+        `Successfully fetched ${result.data.length} pokemons, total count: ${result.total}`,
       );
 
       return result;
@@ -68,6 +65,7 @@ export class AllPokemonController {
     }
   }
 }
+<<<<<<< HEAD
 
 @Controller('my-pokemons')
 export class MyPokemonController {
@@ -145,3 +143,5 @@ export class FightController {
   //   return this.pokemonService.getAvailablePokemons(exclude);
   // }
 }
+=======
+>>>>>>> dev

@@ -1,6 +1,13 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PokemonRepository } from './pokemon.repository';
 import { Pokemon } from './interface/pokemon.interface';
+import {
+  defaultSort,
+  POKEMON_NAME_ENGLISH,
+  sortByConst,
+  sortOrderConst,
+} from './constants';
+import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 
 @Injectable()
 export class PokemonService {
@@ -8,42 +15,35 @@ export class PokemonService {
 
   constructor(private readonly pokemonRepository: PokemonRepository) {}
 
-  async getPokemons(query: {
-    sortBy: string;
-    isOwn?: boolean;
-    nameSearch?: string;
-    page: number;
-    pageSize: number;
-  }): Promise<{ pokemons: Pokemon[]; totalCount: number; message?: string }> {
-    const { sortBy, isOwn, nameSearch, page, pageSize } = query;
+  async getPokemons(
+    query: GetPokemonsQueryDto,
+  ): Promise<{ data: Pokemon[]; total: number; message?: string }> {
+    const { sortBy, sortType, isOwn, nameSearch, page, pageSize } = query;
     this.logger.log(`Fetching pokemons with query: ${JSON.stringify(query)}`);
 
-    const skip = (page - 1) * pageSize;
+    const validatedPage = Math.max(1, page);
+    const skip = (validatedPage - 1) * pageSize;
     const limit = pageSize;
 
-    let sort: any = {};
-    if (sortBy === 'alphabeticallyA-Z') {
-      sort = { id: 1, 'name.english': 1 };
-    } else if (sortBy === 'alphabeticallyZ-A') {
-      sort = { 'name.english': -1 };
-    } else if (sortBy === 'HP_l') {
-      sort = { 'base.HP': 1 };
-    } else if (sortBy === 'HP_h') {
-      sort = { 'base.HP': -1 };
-    } else if (sortBy === 'Power_l') {
-      sort = { 'base.Attack': 1 };
-    } else if (sortBy === 'Power_h') {
-      sort = { 'base.Attack': -1 };
+    const sortByField = sortByConst[sortBy];
+    const sortOrder = sortOrderConst[sortType];
+
+    let sort: Record<string, 'asc' | 'desc'> = {};
+
+    if (sortByField) {
+      sort[sortByField] = sortOrder;
+    } else {
+      sort = { ...defaultSort };
     }
 
     const filter: Record<string, any> = {};
 
-    if (isOwn !== undefined) {
+    if (isOwn) {
       filter.isOwn = isOwn;
     }
 
     if (nameSearch) {
-      filter['name.english'] = { $regex: nameSearch, $options: 'i' };
+      filter[POKEMON_NAME_ENGLISH] = { $regex: nameSearch, $options: 'i' };
     }
     try {
       const result = await this.pokemonRepository.findPokemons({
@@ -53,16 +53,16 @@ export class PokemonService {
         limit,
       });
 
-      if (result.pokemons.length === 0) {
+      if (!result.data.length) {
         return {
-          pokemons: [],
-          totalCount: 0,
+          data: [],
+          total: 0,
           message: 'No Pokemons were found',
         };
       }
 
       this.logger.log(
-        `Successfully fetched ${result.pokemons.length} pokemons, total count: ${result.totalCount}`,
+        `Successfully fetched ${result.data.length} pokemons, total count: ${result.total}`,
       );
 
       return result;
@@ -90,17 +90,17 @@ export class PokemonService {
     }
   }
 
-  async getPokemonsForFight(userPokemonId: number): Promise<Pokemon | null> { //TODO
-    try {
-      const { enemyPokemon, userPokemon } = query;
+  // async getPokemonsForFight(userPokemonId: number): Promise<Pokemon | null> { //TODO
+  //   try {
+  //     const { enemyPokemon, userPokemon } = query;
 
-      let getEnemyPokemon: any = [
-        { $match: { isOwn: false } },
-        { $sample: { size: 1 } },
-      ];
-      return getEnemyPokemon;
-    } catch (error) {}
-  }
+  //     let getEnemyPokemon: any = [
+  //       { $match: { isOwn: false } },
+  //       { $sample: { size: 1 } },
+  //     ];
+  //     return getEnemyPokemon;
+  //   } catch (error) {}
+  // }
 
   //  async getAvailablePokemons(exclude: string): Promise<Pokemon[]> {
   //     return this.pokemonRepository.findAvailablePokemonsSwitch(exclude);

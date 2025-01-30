@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
+<<<<<<< HEAD
 import { AllPokemonController, FightController, MyPokemonController } from './pokemon.controller';
+=======
+import { AllPokemonController } from './pokemon.controller';
+>>>>>>> dev
 import { PokemonService } from './pokemon.service';
 import { PokemonRepository } from './pokemon.repository';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
+import { Pokemon, PokemonSchema } from '../schemas/pokemon.schema';
 
 @Module({
   imports: [
@@ -21,7 +25,11 @@ import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
       }),
     }),
   ],
+<<<<<<< HEAD
   controllers: [AllPokemonController, MyPokemonController, FightController],
+=======
+  controllers: [AllPokemonController],
+>>>>>>> dev
   providers: [PokemonService, PokemonRepository],
 })
 export class PokemonModule {}
