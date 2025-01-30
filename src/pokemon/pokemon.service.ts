@@ -21,10 +21,9 @@ export class PokemonService {
     const { sortBy, sortType, isOwn, nameSearch, page, pageSize } = query;
     this.logger.log(`Fetching pokemons with query: ${JSON.stringify(query)}`);
 
-    const skip = (page - 1) * pageSize;
+    const validatedPage = Math.max(1, page);
+    const skip = (validatedPage - 1) * pageSize;
     const limit = pageSize;
-
-    
 
     const sortByField = sortByConst[sortBy];
     const sortOrder = sortOrderConst[sortType];
