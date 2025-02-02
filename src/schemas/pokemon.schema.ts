@@ -1,10 +1,16 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type PokemonDocument = Pokemon & Document;
 
 @Schema({ collection: 'pokemon' })
 export class Pokemon {
+  @Prop({ required: true })
+  _id: Types.ObjectId;
+
+  @Prop({ required: true })
+  id: number;
+
   @Prop({
     type: {
       english: { type: String, required: true },
@@ -90,7 +96,7 @@ export class Pokemon {
   };
 
   @Prop({ required: true })
-  isOwn: Boolean;
+  isOwn: boolean;
 }
 
 export const PokemonSchema = SchemaFactory.createForClass(Pokemon);

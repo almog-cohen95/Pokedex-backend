@@ -8,6 +8,7 @@ import {
   sortOrderConst,
 } from './constants';
 import { GetPokemonsQueryDto } from './dto/pokemon.dto';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class PokemonService {
@@ -75,7 +76,7 @@ export class PokemonService {
     }
   }
 
-  async getPokemonById(id: string): Promise<Pokemon | null> {
+  async getPokemonById(id: Types.ObjectId): Promise<Pokemon | null> {
     try {
       this.logger.log(`Get pokemon with ID: ${id}`);
       const pokemonId = await this.pokemonRepository.findPokemonById(id);
@@ -90,19 +91,19 @@ export class PokemonService {
     }
   }
 
-  // async getPokemonsForFight(userPokemonId: number): Promise<Pokemon | null> { //TODO
-  //   try {
-  //     const { enemyPokemon, userPokemon } = query;
-
-  //     let getEnemyPokemon: any = [
-  //       { $match: { isOwn: false } },
-  //       { $sample: { size: 1 } },
-  //     ];
-  //     return getEnemyPokemon;
-  //   } catch (error) {}
-  // }
-
-  //  async getAvailablePokemons(exclude: string): Promise<Pokemon[]> {
-  //     return this.pokemonRepository.findAvailablePokemonsSwitch(exclude);
-  //   }
+  async getPokemonsForFight() {
+    try {
+      this.logger.log(`Get enemy pokemon and user pokemons list`);
+      const pokemonsForFight =
+        await this.pokemonRepository.getPokemonsForFight();
+      this.logger.log(`Successfully get enemy pokemon and user pokemons list`);
+      return pokemonsForFight;
+    } catch (error) {
+      this.logger.error('Error get pokemon by id', error.stack);
+      throw new HttpException(
+        'Error get pokemon by id',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
