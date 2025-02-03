@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { FightRepository } from './fight.repository';
 import { PokemonService } from 'src/pokemon/pokemon.service';
 import { IFight, PokemonDetails } from './interface/fight.interface';
@@ -32,6 +38,7 @@ export class FightService {
       this.logger.log(
         `Successfully set enemy pokemon, user pokemon and user pokemons list for fight`,
       );
+
       return pokemonsForFight;
     } catch (error) {
       this.logger.error('Error get pokemon by id', error.stack);
@@ -41,4 +48,147 @@ export class FightService {
       );
     }
   }
+
+  async fightTurnManager() {
+    try {
+      const currentFight = await this.fightRepository.getCurrentFight();
+
+      //חישוב הנזק שהמשתמש עושה ליריב
+      if (currentFight[0]?.isUserTurn) {
+        const attack = currentFight[0]?.userPokemon.base.Attack;
+        const defense = currentFight[0]?.enemyPokemon.base.Defense;
+        const damage = Math.max(attack - defense, 0);
+
+        currentFight[0].enemyPokemon.currentHP = Math.max(
+          currentFight[0].enemyPokemon.currentHP - damage,
+          0,
+        );
+        currentFight[0].isUserTurn = false;
+      } else {
+        //חישוב הנזק שהיריב עושה למשתמש
+        const attack = currentFight[0]?.enemyPokemon.base.Attack;
+        const defense = currentFight[0]?.userPokemon.base.Defense;
+        const damage = Math.max(attack - defense, 0);
+
+        currentFight[0].userPokemon.currentHP = Math.max(
+          currentFight[0].userPokemon.currentHP - damage,
+          0,
+        );
+        currentFight[0].isUserTurn = true;
+      }
+      await this.fightRepository.updateFight(currentFight);
+
+      return (
+        currentFight[0].isUserTurn,
+        currentFight[0].userPokemon.currentHP,
+        currentFight[0].userPokemon.currentHP
+      );
+    } catch (error) {
+      console.error('Error in fightTurnManager:', error);
+    }
+  }
 }
+
+//   async fightTurnManager(
+//     attackerId: Types.ObjectId,
+//     enemyPokemonId: Types.ObjectId,
+//     userPokemonId: Types.ObjectId,
+//   ) {
+//     // try {
+//     //   const attacker = attackerId.equals(userPokemonId)
+//     //     ? userPokemonId
+//     //     : enemyPokemonId;
+
+//     //   const defender =
+//     //     attacker === userPokemonId ? enemyPokemonId : userPokemonId;
+
+//     //   const damageToUser = calculateDamage(attacker, defender);
+//     try {
+//       const currentFight =
+//         await this.fightRepository.getCurrentFightWithDetails();
+//       if (!currentFight) {
+//         throw new NotFoundException('No active fight found');
+//       }
+
+//       // Determine attacker and defender
+//       const isUserAttacking = attackerId.equals(userPokemonId);
+//       const attacker = isUserAttacking
+//         ? currentFight.userPokemon
+//         : currentFight.enemyPokemon;
+//       const defender = isUserAttacking
+//         ? currentFight.enemyPokemon
+//         : currentFight.userPokemon;
+
+//  function calculateDamage(pokemonAttack: number, pokemonDefense: number) {
+//   return Math.max(pokemonAttack - pokemonDefense, 0);
+// }
+//       // Calculate damage
+//       const damage = calculateDamage(
+//         attacker.base.Attack,
+//         defender.base.Defense,
+//       );
+
+//       // Apply damage and check for fainted state
+//       const newDefenderHP = Math.max(0, defender.currentHP - damage);
+
+//       // Prepare update data
+//       const updateData = {
+//         [`${isUserAttacking ? 'enemyPokemon' : 'userPokemon'}.currentHP`]:
+//           newDefenderHP,
+//       };
+
+//       // Update fight state in repository
+//       const updatedFight =
+//         await this.fightRepository.updateFightState(updateData);
+
+//       // Prepare turn result
+//       const turnResult = {
+//         attacker: {
+//           id: attacker._id,
+//           name: attacker.name.english,
+//           currentHP: attacker.currentHP,
+//         },
+//         defender: {
+//           id: defender._id,
+//           name: defender.name.english,
+//           currentHP: newDefenderHP,
+//           damageTaken: damage,
+//         },
+//       };
+
+//       return {
+//         turnResult,
+//         fightState: updatedFight,
+//       };
+//     } catch (error) {
+//       this.logger.error('Error in fight turn manager', error.stack);
+//       throw new HttpException(
+//         'Error processing fight turn',
+//         HttpStatus.INTERNAL_SERVER_ERROR,
+//       );
+//     }
+//   }
+// }
+
+// async updatePokemonHP(userPokemonId: string, damageToUser: number) {
+//   try {
+
+//     const userPokemon = await this.fightRepository.getUserPokemon(); // ב-repository תעשה את החיפוש
+//     let newHP = userPokemon.currentHP - damageToUser;
+//     if (newHP < 0) {
+//       newHP = 0; // לא יכול להיות HP שלילי
+//     }
+
+//     const updatedPokemon = await this.fightRepository.updatePokemonHP(userPokemonId, newHP);
+
+//     this.logger.log(`Successfully updated Pokemon HP`);
+
+//     return updatedPokemon;
+//   } catch (error) {
+//     this.logger.error('Error updating pokemon HP', error.stack);
+//     throw new HttpException(
+//       'Error updating pokemon HP',
+//       HttpStatus.INTERNAL_SERVER_ERROR,
+//     );
+//   }
+// }

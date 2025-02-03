@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Get,
   HttpException,
   HttpStatus,
   Logger,
   Param,
+  Post,
 } from '@nestjs/common';
 import { FightService } from './fight.service';
 import { PokemonService } from 'src/pokemon/pokemon.service';
@@ -17,6 +19,24 @@ export class FightController {
     public fightService: FightService,
     private readonly pokemonService: PokemonService,
   ) {}
+
+  // @Post('/turn')
+  // async processTurn(
+  //   @Body()
+  //   turnData: {
+  //     attackerId: string;
+  //     enemyPokemonId: string;
+  //     userPokemonId: string;
+  //   },
+  // ) {
+  //   const result = await this.fightService.fightTurnManager(
+  //     new Types.ObjectId(turnData.attackerId),
+  //     new Types.ObjectId(turnData.enemyPokemonId),
+  //     new Types.ObjectId(turnData.userPokemonId),
+  //   );
+
+  //   return result;
+  // }
 
   @Get(':selectedPokemonId')
   async startFight(
@@ -65,4 +85,34 @@ export class FightController {
       );
     }
   }
+
+
+
+
+
+  // @Post('update-pokemon-hp')
+  // async updatePokemonHP(
+  //   @Body() updateData: { userPokemonId: string; damageToUser: number },
+  // ) {
+  //   const { userPokemonId, damageToUser } = updateData;
+  //   try {
+  //     const result = await this.fightService.updatePokemonHP({
+  //       userPokemonId,
+  //       damageToUser
+  //     });
+  //     this.logger.log(
+  //       `Successfully fetched `,
+  //     );
+
+  //     return result;
+  //   } catch (error) {
+  //     this.logger.error('Error updating Pokemon HP', error.stack);
+  //     throw new HttpException(
+  //       'Error updating Pokemon HP',
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
+
+
 }

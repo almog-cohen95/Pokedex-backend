@@ -38,6 +38,9 @@ export class Fight {
   };
 
   @Prop({ required: true })
+  isUserTurn: boolean;
+
+  @Prop({ required: true })
   fainted: boolean;
 
   @Prop({ required: true })
