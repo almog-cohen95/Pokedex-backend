@@ -38,6 +38,19 @@ export class FightController {
   //   return result;
   // }
 
+  @Post('user-turn')
+  async handleTurn() {
+    try {
+      const result = await this.fightService.fightTurnManager();
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        'Error processing turn',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get(':selectedPokemonId')
   async startFight(
     @Param('selectedPokemonId') selectedPokemonId: Types.ObjectId,
@@ -86,10 +99,6 @@ export class FightController {
     }
   }
 
-
-
-
-
   // @Post('update-pokemon-hp')
   // async updatePokemonHP(
   //   @Body() updateData: { userPokemonId: string; damageToUser: number },
@@ -113,6 +122,4 @@ export class FightController {
   //     );
   //   }
   // }
-
-
 }

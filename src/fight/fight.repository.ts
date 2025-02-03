@@ -126,39 +126,39 @@ export class FightRepository {
 
   async getCurrentFight() {
     try {
-      this.logger.log(
-        `Get current fight`,
-      );
-      const currentFight = await this.fightModel.aggregate([
-            {
-                $lookup: {
-                    from: 'pokemons', // שם האוסף של הפוקימונים
-                    localField: 'enemyPokemon._id', // מזהה הפוקימון היריב
-                    foreignField: '_id', // מזהה הפוקימון באוסף pokemons
-                    as: 'enemyPokemonData'
-                }
+      this.logger.log(`Get current fight`);
+      const currentFight = await this.fightModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'pokemons', // שם האוסף של הפוקימונים
+              localField: 'enemyPokemon', // מזהה הפוקימון היריב
+              foreignField: '_id', // מזהה הפוקימון באוסף pokemons
+              as: 'enemyPokemonData',
             },
-            {
-                $unwind: {
-                    path: '$enemyPokemonData',
-                    preserveNullAndEmptyArrays: true
-                }
+          },
+          {
+            $unwind: {
+              path: '$enemyPokemonData',
+              preserveNullAndEmptyArrays: true,
             },
-            {
-                $lookup: {
-                    from: 'pokemons', // חיבור גם לפוקימון של המשתמש
-                    localField: 'userPokemon._id',
-                    foreignField: '_id',
-                    as: 'userPokemonData'
-                }
+          },
+          {
+            $lookup: {
+              from: 'pokemons', // חיבור גם לפוקימון של המשתמש
+              localField: 'userPokemon',
+              foreignField: '_id',
+              as: 'userPokemonData',
             },
-            {
-                $unwind: {
-                    path: '$userPokemonData',
-                    preserveNullAndEmptyArrays: true
-                }
-            }
-        ]).exec();
+          },
+          {
+            $unwind: {
+              path: '$userPokemonData',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ])
+        .exec();
       this.logger.log('Database result for current fight:', currentFight);
       return currentFight;
     } catch (error) {
@@ -168,28 +168,27 @@ export class FightRepository {
   }
 
   async updateFight(currentFight: any) {
-  try {
-    this.logger.log('Updating current fight');
-    
-    const result = await this.fightModel.updateOne(
-      { },
-      { 
-        $set: {
-          'userPokemon.currentHP': currentFight[0].userPokemon.currentHP,
-          'enemyPokemon.currentHP': currentFight[0].enemyPokemon.currentHP,
-          'isUserTurn': currentFight[0].isUserTurn
-        }
-      }
-    );
+    try {
+      this.logger.log('Updating current fight');
 
-    this.logger.log('Fight updated successfully');
-    return result;
-  } catch (error) {
-    this.logger.error('Error updating fight:', error.stack);
-    throw new Error('Database error while updating the fight');
+      const result = await this.fightModel.updateOne(
+        {},
+        {
+          $set: {
+            'userPokemon.currentHP': currentFight.userPokemon.currentHP,
+            'enemyPokemon.currentHP': currentFight.enemyPokemon.currentHP,
+            isUserTurn: currentFight.isUserTurn,
+          },
+        },
+      );
+
+      this.logger.log('Fight updated successfully');
+      return result;
+    } catch (error) {
+      this.logger.error('Error updating fight:', error.stack);
+      throw new Error('Database error while updating the fight');
+    }
   }
-}
-
 
   // async updatePokemonHP(userPokemonId: string, damageToUser: number) {
   //   const fight = await this.fightModel.findOne({}).exec();
@@ -249,6 +248,7 @@ export class FightRepository {
                 base: '$userPokemonData.base',
                 currentHP: '$userPokemon.currentHP',
               },
+              isUserTurn:1,
               fainted: 1,
               catch: 1,
             },
@@ -268,7 +268,7 @@ export class FightRepository {
     try {
       const updatedFight = await this.fightModel
         .findOneAndUpdate(
-          {}, // Updates the current fight
+         { _id: updateData._id },
           {
             $set: updateData,
             $inc: { turnNumber: 1 },

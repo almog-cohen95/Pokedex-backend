@@ -51,38 +51,45 @@ export class FightService {
 
   async fightTurnManager() {
     try {
-      const currentFight = await this.fightRepository.getCurrentFight();
+      const currentFight =
+        await this.fightRepository.getCurrentFightWithDetails();
+      console.log('currentFight:', currentFight);
+      if (!currentFight.userPokemon || !currentFight.enemyPokemon) {
+        throw new Error('userPokemonData or enemyPokemonData is missing!');
+      }
+
+      console.log(currentFight.isUserTurn);
 
       //חישוב הנזק שהמשתמש עושה ליריב
-      if (currentFight[0]?.isUserTurn) {
-        const attack = currentFight[0]?.userPokemon.base.Attack;
-        const defense = currentFight[0]?.enemyPokemon.base.Defense;
-        const damage = Math.max(attack - defense, 0);
-
-        currentFight[0].enemyPokemon.currentHP = Math.max(
-          currentFight[0].enemyPokemon.currentHP - damage,
+      if (currentFight.isUserTurn) {
+        const attack = currentFight.userPokemon.base.Attack;
+        const defense = currentFight.enemyPokemon.base.Defense;
+        const damage = Math.max(attack - defense, 5);
+        currentFight.enemyPokemon.currentHP = Math.max(
+          currentFight.enemyPokemon.currentHP - damage,
           0,
         );
-        currentFight[0].isUserTurn = false;
+        currentFight.isUserTurn = false;
       } else {
         //חישוב הנזק שהיריב עושה למשתמש
-        const attack = currentFight[0]?.enemyPokemon.base.Attack;
-        const defense = currentFight[0]?.userPokemon.base.Defense;
-        const damage = Math.max(attack - defense, 0);
+        const attack = currentFight.enemyPokemon.base.Attack;
+        const defense = currentFight.userPokemon.base.Defense;
 
-        currentFight[0].userPokemon.currentHP = Math.max(
-          currentFight[0].userPokemon.currentHP - damage,
+        const damage = Math.max(attack - defense, 5);
+
+        currentFight.userPokemon.currentHP = Math.max(
+          currentFight.userPokemon.currentHP - damage,
           0,
         );
-        currentFight[0].isUserTurn = true;
+        currentFight.isUserTurn = true;
       }
       await this.fightRepository.updateFight(currentFight);
 
-      return (
-        currentFight[0].isUserTurn,
-        currentFight[0].userPokemon.currentHP,
-        currentFight[0].userPokemon.currentHP
-      );
+      return {
+        isUserTurn: currentFight.isUserTurn,
+        enemyPokemonHP: currentFight.enemyPokemon.currentHP,
+        userPokemonHP: currentFight.userPokemon.currentHP,
+      };
     } catch (error) {
       console.error('Error in fightTurnManager:', error);
     }
