@@ -8,6 +8,7 @@ import {
   sortOrderConst,
 } from './constants';
 import { GetPokemonsQueryDto } from './dto/pokemon.dto';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class PokemonService {
@@ -75,12 +76,28 @@ export class PokemonService {
     }
   }
 
-  async getPokemonById(id: string): Promise<Pokemon | null> {
+  async getPokemonById(id: Types.ObjectId): Promise<Pokemon | null> {
     try {
       this.logger.log(`Get pokemon with ID: ${id}`);
       const pokemonId = await this.pokemonRepository.findPokemonById(id);
       this.logger.log(`Successfully get pokemon with ID: ${id}`);
       return pokemonId;
+    } catch (error) {
+      this.logger.error('Error get pokemon by id', error.stack);
+      throw new HttpException(
+        'Error get pokemon by id',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getPokemonsForFight() {
+    try {
+      this.logger.log(`Get enemy pokemon and user pokemons list`);
+      const pokemonsForFight =
+        await this.pokemonRepository.getPokemonsForFight();
+      this.logger.log(`Successfully get enemy pokemon and user pokemons list`);
+      return pokemonsForFight;
     } catch (error) {
       this.logger.error('Error get pokemon by id', error.stack);
       throw new HttpException(

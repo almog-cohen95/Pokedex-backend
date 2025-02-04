@@ -10,10 +10,11 @@ import {
 import { PokemonService } from './pokemon.service';
 import { Pokemon } from './interface/pokemon.interface';
 import { GetPokemonsQueryDto } from './dto/pokemon.dto';
+import { Types } from 'mongoose';
 
 @Controller('pokemons')
-export class AllPokemonController {
-  private readonly logger = new Logger(AllPokemonController.name);
+export class PokemonController {
+  private readonly logger = new Logger(PokemonController.name);
   constructor(public pokemonService: PokemonService) {}
 
   @Get()
@@ -50,7 +51,7 @@ export class AllPokemonController {
   }
 
   @Get(':id')
-  async getPokemonById(@Param('id') id: string) {
+  async getPokemonById(@Param('id') id: Types.ObjectId) {
     try {
       this.logger.log(`Get pokemon with ID: ${id}`);
       const pokemonId = await this.pokemonService.getPokemonById(id);

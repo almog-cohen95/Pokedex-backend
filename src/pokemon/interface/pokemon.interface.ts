@@ -1,4 +1,8 @@
+import { Types } from 'mongoose';
+
 export interface Pokemon {
+  _id: Types.ObjectId;
+  id: number;
   name: Name;
   type: string[];
   base: Base;
@@ -11,36 +15,36 @@ export interface Pokemon {
 }
 
 export interface Base {
-    HP: number
-    Attack: number
-    Defense: number
-    SpAttack: number
-    SpDefense: number
-    Speed: number
+  HP: number;
+  Attack: number;
+  Defense: number;
+  SpAttack: number;
+  SpDefense: number;
+  Speed: number;
 }
 
 export interface Profile {
-  height: string
-  weight: string
-  egg?: string[]
+  height: string;
+  weight: string;
+  egg?: string[];
   ability: string[][];
-  gender: string
+  gender: string;
 }
 
 export interface Evolution {
-  prev?: string[]
-  next?: string[][]
+  prev?: string[];
+  next?: string[][];
 }
 
 export interface Name {
-  english: string
-  japanese: string
-  chinese: string
-  french: string
+  english: string;
+  japanese: string;
+  chinese: string;
+  french: string;
 }
 
 export interface Image {
-  sprite: string
-  thumbnail: string
-  hires?: string
+  sprite: string;
+  thumbnail: string;
+  hires?: string;
 }

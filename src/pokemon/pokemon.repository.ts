@@ -4,14 +4,16 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Pokemon } from './interface/pokemon.interface';
+import { Model, Types } from 'mongoose';
+import { Pokemon, PokemonDocument } from 'src/schemas/pokemon.schema';
 
 @Injectable()
 export class PokemonRepository {
   private readonly logger = new Logger(PokemonRepository.name);
 
-  constructor(@InjectModel('Pokemon') private pokemonModel: Model<Pokemon>) {}
+  constructor(
+    @InjectModel(Pokemon.name) private pokemonModel: Model<PokemonDocument>,
+  ) {}
 
   async findPokemons(query: {
     sort: Record<string, 'asc' | 'desc'>;
@@ -27,6 +29,7 @@ export class PokemonRepository {
         .sort(query.sort || {})
         .skip(query.skip)
         .limit(query.limit)
+        .lean()
         .exec();
 
       const totalCount = await this.pokemonModel
@@ -36,9 +39,8 @@ export class PokemonRepository {
       this.logger.log(
         `Found ${pokemons.length} pokemons, total count: ${totalCount}`,
       );
-      
-      return { data: pokemons, total: totalCount };
 
+      return { data: pokemons, total: totalCount };
     } catch (error) {
       this.logger.error('Error while fetching pokemons', error.stack);
       throw new InternalServerErrorException(
@@ -47,14 +49,49 @@ export class PokemonRepository {
     }
   }
 
-    async findPokemonById(id: string) {
+  async findPokemonById(selectedPokemonId: Types.ObjectId) {
     try {
-      this.logger.log(`Querying pokemon by ID: ${id} from database`);
-      return this.pokemonModel.findById(id).exec();
+      this.logger.log(
+        `Querying pokemon by ID: ${selectedPokemonId} from database`,
+      );
+    const objectId = new Types.ObjectId(selectedPokemonId);
+      const pokemon = await this.pokemonModel
+        .findById(objectId)
+        .exec();
+      this.logger.log('Database query result:', pokemon);
+      return pokemon;
     } catch (error) {
       this.logger.error('Error querying pokemon by ID', error.stack);
       throw new Error('Database error while fetching pokemon by ID');
     }
   }
-}
 
+  async getPokemonsForFight() {
+    try {
+      this.logger.log(`Fetching enemy and user Pokemons from database`);
+
+      const result = await this.pokemonModel.aggregate([
+        {
+          $facet: {
+            enemyPokemon: [
+              { $match: { isOwn: false } },
+              { $sample: { size: 1 } },
+            ],
+            userPokemonsList: [
+              { $match: { isOwn: true } },
+              { $project: { _id: 1 } },
+            ],
+          },
+        },
+      ]);
+
+      return {
+        enemyPokemon: result[0].enemyPokemon[0],
+        userPokemonsList: result[0].userPokemonsList.map((p) => p._id),
+      };
+    } catch (error) {
+      this.logger.error('Error fetching enemy and user Pokemons', error.stack);
+      throw new Error('Database error while fetching enemy and user Pokemons');
+    }
+  }
+}
