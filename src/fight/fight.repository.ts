@@ -5,9 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Fight, FightDocument } from 'src/schemas/fight.schema';
-import { IFight } from './interface/fight.interface';
-import { Pokemon } from 'src/pokemon/interface/pokemon.interface';
+import { FightDocument } from 'src/schemas/fight.schema';
 import { getFightAggregation } from './fightAggergation';
 
 @Injectable()
@@ -52,7 +50,7 @@ export class FightRepository {
           currentHP: userPokemonDetails.currentHP,
         };
         existingFight.userPokemonsList = userPokemonsList;
-        const updated = await existingFight.save();
+        await existingFight.save();
       }
       this.logger.log('Send thr fight document to front');
       const fightData = await getFightAggregation(this.fightModel);
