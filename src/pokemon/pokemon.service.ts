@@ -9,6 +9,7 @@ import {
 } from './constants';
 import { GetPokemonsQueryDto } from './dto/pokemon.dto';
 import { Types } from 'mongoose';
+import { PokemonDetails } from 'src/fight/interface/fight.interface';
 
 @Injectable()
 export class PokemonService {
@@ -102,6 +103,40 @@ export class PokemonService {
       this.logger.error('Error get pokemon by id', error.stack);
       throw new HttpException(
         'Error get pokemon by id',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async addPokemonToUserPokemonsList(enemyPokemon: PokemonDetails) {
+    try {
+      this.logger.log(`Add new pokemon to user pokemons list after catch`);
+      const newPokemonToList =
+        await this.pokemonRepository.addPokemonToUserPokemonsList(enemyPokemon);
+      this.logger.log(
+        `Successfully add new pokemon to user pokemons list after catch`,
+      );
+      return newPokemonToList;
+    } catch (error) {
+      this.logger.error('Error add new pokemon', error.stack);
+      throw new HttpException(
+        'Error add new pokemon',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getUserPokemonsList(isOwn: boolean) {
+    try {
+      this.logger.log(`Get user pokemons list`);
+      const userPokemonToList =
+        await this.pokemonRepository.getUserPokemonsList(isOwn);
+      this.logger.log(`Successfully get user pokemons list`);
+      return userPokemonToList;
+    } catch (error) {
+      this.logger.error('Error get user pokemons list', error.stack);
+      throw new HttpException(
+        'Error get user pokemons list',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

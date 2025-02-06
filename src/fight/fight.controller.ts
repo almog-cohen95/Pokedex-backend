@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
   Param,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { FightService } from './fight.service';
@@ -42,6 +43,7 @@ export class FightController {
   async handleTurn() {
     try {
       const result = await this.fightService.fightTurnManager();
+      //  await this.pokemonService.getUserPokemonsList(isOwn);
       return result;
     } catch (error) {
       throw new HttpException(
@@ -49,6 +51,86 @@ export class FightController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Post('catch-enemy-pokemon')
+  async handleCatch() {
+    try {
+      const currentFight = await this.fightService.getCurrentFight();
+
+      if (!currentFight || !currentFight[0]) {
+        throw new HttpException('No current fight found', HttpStatus.NOT_FOUND);
+      }
+
+      const currentEnemyPokemon = currentFight[0].enemyPokemon._id;
+
+      if (currentEnemyPokemon) {
+        await this.pokemonService.addPokemonToUserPokemonsList(
+          currentEnemyPokemon,
+        );
+      }
+      const result = await this.fightService.fightCatchEnemyPokemon();
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        'Error processing turn',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('random-new-enemy-pokemon')
+  async updateFight() {
+    try {
+      const { enemyPokemon, userPokemonsList } =
+        await this.pokemonService.getPokemonsForFight();
+
+      if (!enemyPokemon) {
+        throw new HttpException('No enemy pokemon found', HttpStatus.NOT_FOUND);
+      }
+      if (!userPokemonsList) {
+        throw new HttpException(
+          'No user pokemons list found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const newPokemons = await this.fightService.randomNewEnemyPokemon(
+        { _id: enemyPokemon._id, currentHP: enemyPokemon.base.HP },
+        userPokemonsList,
+      );
+      return { enemyPokemon, userPokemonsList, newPokemons };
+    } catch (error) {
+      this.logger.error(
+        'Error random new enemy pokemon for fight',
+        error.stack,
+      );
+      throw new HttpException(
+        'Error random new enemy pokemon for fight',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('switch-pokemon')
+  async switchPokemon(
+    @Body() switchData: { userPokemonId: Types.ObjectId; selectedPokemonId: Types.ObjectId },
+  ) {
+    this.logger.log(`Fetching Pokemon with ID: ${switchData.selectedPokemonId}`);
+      const selectedPokemon =
+        await this.pokemonService.getPokemonById(switchData.selectedPokemonId);
+      this.logger.log('Fetched Pokemon:', selectedPokemon);
+
+      if (!selectedPokemon) {
+        throw new HttpException(
+          `Selected pokemon not found with ID: ${switchData.selectedPokemonId}`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    return await this.fightService.switchPokemon(
+      switchData.userPokemonId,
+      selectedPokemon,
+    );
   }
 
   @Get(':selectedPokemonId')
@@ -89,7 +171,7 @@ export class FightController {
         userPokemonsList,
       );
 
-      return { enemyPokemon, userPokemonsList, fight };
+      return { fight };
     } catch (error) {
       this.logger.error('Error starting fight', error.stack);
       throw new HttpException(

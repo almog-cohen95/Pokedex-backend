@@ -2,6 +2,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { PokemonService } from 'src/pokemon/pokemon.service';
 import { IFight, PokemonDetails } from './interface/fight.interface';
 import { Pokemon } from 'src/pokemon/interface/pokemon.interface';
 import { Types } from 'mongoose';
+import { calculateCatchChance } from './utils/fight.utils';
 
 @Injectable()
 export class FightService {
@@ -53,18 +55,16 @@ export class FightService {
     try {
       const currentFight =
         await this.fightRepository.getCurrentFightWithDetails();
-      console.log('currentFight:', currentFight);
       if (!currentFight.userPokemon || !currentFight.enemyPokemon) {
         throw new Error('userPokemonData or enemyPokemonData is missing!');
       }
 
-      console.log(currentFight.isUserTurn);
-
+      let damage;
       //חישוב הנזק שהמשתמש עושה ליריב
       if (currentFight.isUserTurn) {
         const attack = currentFight.userPokemon.base.Attack;
         const defense = currentFight.enemyPokemon.base.Defense;
-        const damage = Math.max(attack - defense, 5);
+        damage = Math.max(attack - defense, 44); //TODO
         currentFight.enemyPokemon.currentHP = Math.max(
           currentFight.enemyPokemon.currentHP - damage,
           0,
@@ -74,24 +74,91 @@ export class FightService {
         //חישוב הנזק שהיריב עושה למשתמש
         const attack = currentFight.enemyPokemon.base.Attack;
         const defense = currentFight.userPokemon.base.Defense;
-
-        const damage = Math.max(attack - defense, 5);
-
+        damage = 45; //TODO
+        // damage = Math.max(attack - defense, 5); //TODO
         currentFight.userPokemon.currentHP = Math.max(
           currentFight.userPokemon.currentHP - damage,
           0,
         );
         currentFight.isUserTurn = true;
       }
+      const catchChance = calculateCatchChance(
+        currentFight.enemyPokemon.currentHP,
+        currentFight.enemyPokemon.base.HP,
+      );
+      currentFight.catchChance = catchChance;
       await this.fightRepository.updateFight(currentFight);
 
       return {
         isUserTurn: currentFight.isUserTurn,
         enemyPokemonHP: currentFight.enemyPokemon.currentHP,
         userPokemonHP: currentFight.userPokemon.currentHP,
+        damage,
+        catchChance: catchChance,
       };
     } catch (error) {
       console.error('Error in fightTurnManager:', error);
+    }
+  }
+
+  async fightCatchEnemyPokemon() {
+    try {
+      const currentFight =
+        await this.fightRepository.getCurrentFightWithDetails();
+      if (!currentFight.userPokemon || !currentFight.enemyPokemon) {
+        throw new Error('userPokemonData or enemyPokemonData is missing!');
+      }
+    } catch (error) {
+      console.error('Error in fightTurnManager:', error);
+    }
+  }
+
+  async randomNewEnemyPokemon(
+    enemyPokemon: PokemonDetails,
+    userPokemonsList: Types.ObjectId[],
+  ) {
+    try {
+      const currentFight =
+        await this.fightRepository.getCurrentFightWithDetails();
+      if (!currentFight.userPokemon || !currentFight.enemyPokemon) {
+        throw new Error('userPokemonData or enemyPokemonData is missing!');
+      }
+      await this.fightRepository.setNewEnemyPokemonForFight(
+        enemyPokemon,
+        userPokemonsList,
+      );
+    } catch (error) {
+      console.error('Error random new enemy pokemon:', error);
+    }
+  }
+
+  async getCurrentFight() {
+    try {
+      const currentFight = await this.fightRepository.getCurrentFight();
+
+      if (!currentFight) {
+        throw new Error('Current fight not found');
+      }
+      return currentFight;
+    } catch (error) {
+      console.error('Error fetching current fight', error);
+    }
+  }
+
+  async switchPokemon(userPokemonId: Types.ObjectId, selectedPokemon: Pokemon) {
+    try {
+      const currentFight = await this.fightRepository.switchPokemon(
+        userPokemonId,
+        selectedPokemon,
+      );
+
+      if (!currentFight) {
+        throw new Error("Can't switch pokemon");
+      }
+      return currentFight;
+    } catch (error) {
+      console.error("Can't switch pokemon", error);
+      throw new InternalServerErrorException('Error switching pokemon');
     }
   }
 }

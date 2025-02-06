@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PokemonDetails } from 'src/fight/interface/fight.interface';
 import { Pokemon, PokemonDocument } from 'src/schemas/pokemon.schema';
 
 @Injectable()
@@ -54,10 +55,8 @@ export class PokemonRepository {
       this.logger.log(
         `Querying pokemon by ID: ${selectedPokemonId} from database`,
       );
-    const objectId = new Types.ObjectId(selectedPokemonId);
-      const pokemon = await this.pokemonModel
-        .findById(objectId)
-        .exec();
+      const objectId = new Types.ObjectId(selectedPokemonId);
+      const pokemon = await this.pokemonModel.findById(objectId).exec();
       this.logger.log('Database query result:', pokemon);
       return pokemon;
     } catch (error) {
@@ -74,13 +73,16 @@ export class PokemonRepository {
         {
           $facet: {
             enemyPokemon: [
-              { $match: { isOwn: false } },
-              { $sample: { size: 1 } },
+              
+              // { $match: { isOwn: false } }, //TODO
+                { $match: { _id: new Types.ObjectId("67979cef3d952a17fe085426") } }, 
+              // { $sample: { size: 1 } },  //TODO
             ],
             userPokemonsList: [
               { $match: { isOwn: true } },
               { $project: { _id: 1 } },
             ],
+            
           },
         },
       ]);
@@ -92,6 +94,39 @@ export class PokemonRepository {
     } catch (error) {
       this.logger.error('Error fetching enemy and user Pokemons', error.stack);
       throw new Error('Database error while fetching enemy and user Pokemons');
+    }
+  }
+
+  async addPokemonToUserPokemonsList(enemyPokemon: PokemonDetails) {
+    try {
+      this.logger.log(
+        `Try to add new pokemon to user pokemons list after catch`,
+      );
+
+      const result = await this.pokemonModel.updateOne(
+        { _id: enemyPokemon._id },
+        { $set: { isOwn: true } },
+      );
+
+      return result;
+    } catch (error) {
+      this.logger.error('Error fetching enemy and user Pokemons', error.stack);
+      throw new Error('Database error while fetching enemy and user Pokemons');
+    }
+  }
+
+  async getUserPokemonsList(isOwn:boolean) {
+    try {
+      this.logger.log('Get all pokemons belongs to user');
+      const result = await this.pokemonModel.find({ isOwn }).lean();
+
+      this.logger.log('Get all pokemons belongs to user successfully', result);
+      return result;
+    } catch (error) {
+      this.logger.error('Error Get all pokemons belongs to user', error.stack);
+      throw new InternalServerErrorException(
+        'Error Get all pokemons belongs to user',
+      );
     }
   }
 }

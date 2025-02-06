@@ -44,7 +44,7 @@ export class Fight {
   fainted: boolean;
 
   @Prop({ required: true })
-  catch: boolean;
+  catchChance: number;
 
   @Prop({
     type: [MongooseSchema.Types.ObjectId],

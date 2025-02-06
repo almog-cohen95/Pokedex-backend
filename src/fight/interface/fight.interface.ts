@@ -5,7 +5,7 @@ export interface IFight {
   userPokemon: PokemonDetails;
   isUserTurn: boolean;
   fainted: boolean;
-  catch: boolean;
+  catchChance: number;
   userPokemonsList: Types.ObjectId[];
 }
 

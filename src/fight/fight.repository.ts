@@ -9,7 +9,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Fight, FightDocument } from 'src/schemas/fight.schema';
-import { IFight } from './interface/fight.interface';
+import { IFight, PokemonDetails } from './interface/fight.interface';
 import { Pokemon } from 'src/pokemon/interface/pokemon.interface';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class FightRepository {
           },
           isUserTurn: true,
           fainted: false,
-          catch: false,
+          catchChance: 0.1,
           userPokemonsList: userPokemonsList,
         });
 
@@ -54,11 +54,12 @@ export class FightRepository {
           _id: userPokemonDetails._id,
           currentHP: userPokemonDetails.currentHP,
         };
+        existingFight.catchChance;
         existingFight.isUserTurn;
-        existingFight.userPokemonsList = userPokemonsList;
+        existingFight.userPokemonsList;
         await existingFight.save();
       }
-      this.logger.log('Send thr fight document to front');
+      this.logger.log(`Send the fight document to front:${existingFight}`);
       const fightData = await this.fightModel
         .aggregate([
           {
@@ -94,21 +95,22 @@ export class FightRepository {
                 image: '$enemyPokemonData.image',
                 base: '$enemyPokemonData.base',
                 currentHP: '$enemyPokemon.currentHP',
+                profile: '$enemyPokemonData.profile',
+                type: '$enemyPokemonData.type',
+                species: '$enemyPokemonData.species',
+                isOwn: '$enemyPokemonData.isOwn',
+                _id: '$enemyPokemonData._id',
               },
               userPokemon: {
                 name: '$userPokemonData.name',
                 image: '$userPokemonData.image',
                 base: '$userPokemonData.base',
                 currentHP: '$userPokemon.currentHP',
+                _id: '$userPokemon._id',
               },
-              userPokemonsList: {
-                _id: 1,
-                name: 1,
-                image: 1,
-                base: 1,
-              },
+              userPokemonsList: '$userPokemonsListData',
               fainted: 1,
-              catch: 1,
+              catchChance: 1,
             },
           },
           { $limit: 1 },
@@ -131,9 +133,9 @@ export class FightRepository {
         .aggregate([
           {
             $lookup: {
-              from: 'pokemons', // שם האוסף של הפוקימונים
-              localField: 'enemyPokemon', // מזהה הפוקימון היריב
-              foreignField: '_id', // מזהה הפוקימון באוסף pokemons
+              from: 'pokemons',
+              localField: 'enemyPokemon',
+              foreignField: '_id',
               as: 'enemyPokemonData',
             },
           },
@@ -145,7 +147,7 @@ export class FightRepository {
           },
           {
             $lookup: {
-              from: 'pokemons', // חיבור גם לפוקימון של המשתמש
+              from: 'pokemons',
               localField: 'userPokemon',
               foreignField: '_id',
               as: 'userPokemonData',
@@ -178,11 +180,12 @@ export class FightRepository {
             'userPokemon.currentHP': currentFight.userPokemon.currentHP,
             'enemyPokemon.currentHP': currentFight.enemyPokemon.currentHP,
             isUserTurn: currentFight.isUserTurn,
+            catchChance: currentFight.catchChance,
           },
         },
       );
 
-      this.logger.log('Fight updated successfully');
+      this.logger.log('Fight updated successfully', result);
       return result;
     } catch (error) {
       this.logger.error('Error updating fight:', error.stack);
@@ -215,7 +218,7 @@ export class FightRepository {
     try {
       const fightData = await this.fightModel
         .aggregate([
-          { $match: {} }, // Gets the current fight
+          { $match: {} },
           {
             $lookup: {
               from: 'pokemon',
@@ -241,6 +244,9 @@ export class FightRepository {
                 name: '$enemyPokemonData.name',
                 base: '$enemyPokemonData.base',
                 currentHP: '$enemyPokemon.currentHP',
+                type: '$enemyPokemonData.type',
+                species: '$enemyPokemonData.species',
+                isOwn: '$enemyPokemonData.isOwn',
               },
               userPokemon: {
                 _id: '$userPokemonData._id',
@@ -248,7 +254,7 @@ export class FightRepository {
                 base: '$userPokemonData.base',
                 currentHP: '$userPokemon.currentHP',
               },
-              isUserTurn:1,
+              isUserTurn: 1,
               fainted: 1,
               catch: 1,
             },
@@ -268,12 +274,12 @@ export class FightRepository {
     try {
       const updatedFight = await this.fightModel
         .findOneAndUpdate(
-         { _id: updateData._id },
+          { _id: updateData._id },
           {
             $set: updateData,
             $inc: { turnNumber: 1 },
           },
-          { new: true }, // Returns the updated document
+          { new: true },
         )
         .exec();
 
@@ -285,6 +291,75 @@ export class FightRepository {
     } catch (error) {
       this.logger.error('Error updating fight state', error.stack);
       throw new InternalServerErrorException('Error updating fight state');
+    }
+  }
+
+  async setNewEnemyPokemonForFight(
+    enemyPokemon: PokemonDetails,
+    userPokemonsList: Types.ObjectId[],
+  ) {
+    try {
+      const result = await this.fightModel.updateOne(
+        {},
+        {
+          $set: {
+            'enemyPokemon._id': enemyPokemon._id,
+            'enemyPokemon.currentHP': enemyPokemon.currentHP,
+
+            userPokemonsList: userPokemonsList,
+          },
+        },
+        { new: true },
+      );
+
+      this.logger.log('random new enemy pokemon successfully', result);
+
+      const updatedFight = await this.fightModel.findOne({}).lean();
+      this.logger.log('Updated fight document:', updatedFight);
+      return updatedFight;
+      // return result;
+    } catch (error) {
+      this.logger.error('Error random new enemy pokemon', error.stack);
+      throw new InternalServerErrorException('Error random new enemy pokemon');
+    }
+  }
+
+
+
+  async switchPokemon(userPokemonId: Types.ObjectId, selectedPokemon: Pokemon) {
+    try {
+      console.log('Finding fight with userPokemon._id:', userPokemonId);
+
+      const updatedFight = await this.fightModel.findOneAndUpdate(
+        { 'userPokemon._id': userPokemonId },
+        {
+          $set: {
+            'userPokemon._id': selectedPokemon._id,
+            'userPokemon.name': selectedPokemon.name,
+            'userPokemon.image': selectedPokemon.image,
+            'userPokemon.base': selectedPokemon.base,
+            'userPokemon.currentHP': selectedPokemon.base.HP,
+          },
+        },
+        { new: true },
+      ).populate({
+      path: 'userPokemon._id',
+      model: 'Pokemon',
+      select: 'name image base'
+    });
+
+      if (!updatedFight) {
+        throw new Error('Fight not found after switching Pokémon.');
+      }
+
+      this.logger.log('Pokemon switched successfully', updatedFight);
+
+      return {
+        fight: updatedFight,
+      };
+    } catch (error) {
+      this.logger.error('Error random new enemy pokemon', error.stack);
+      throw new InternalServerErrorException('Error random new enemy pokemon');
     }
   }
 }
