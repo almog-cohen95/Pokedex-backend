@@ -64,7 +64,7 @@ export class FightService {
       if (currentFight.isUserTurn) {
         const attack = currentFight.userPokemon.base.Attack;
         const defense = currentFight.enemyPokemon.base.Defense;
-        damage = Math.max(attack - defense, 44); //TODO
+        damage = Math.max(attack - defense, 5); 
         currentFight.enemyPokemon.currentHP = Math.max(
           currentFight.enemyPokemon.currentHP - damage,
           0,
@@ -74,8 +74,7 @@ export class FightService {
         //חישוב הנזק שהיריב עושה למשתמש
         const attack = currentFight.enemyPokemon.base.Attack;
         const defense = currentFight.userPokemon.base.Defense;
-        damage = 45; //TODO
-        // damage = Math.max(attack - defense, 5); //TODO
+        damage = Math.max(attack - defense, 5);
         currentFight.userPokemon.currentHP = Math.max(
           currentFight.userPokemon.currentHP - damage,
           0,
@@ -147,15 +146,18 @@ export class FightService {
 
   async switchPokemon(userPokemonId: Types.ObjectId, selectedPokemon: Pokemon) {
     try {
-      const currentFight = await this.fightRepository.switchPokemon(
+      const switchPokemon = await this.fightRepository.switchPokemon(
         userPokemonId,
         selectedPokemon,
       );
 
-      if (!currentFight) {
+      console.log('!@!@#!#@!#!@#!#!#!!# userPokemonId:', userPokemonId, '!@!@#!#@!#!@#!#!#!!# selectedPokemon:',selectedPokemon)
+
+      if (!switchPokemon) {
         throw new Error("Can't switch pokemon");
       }
-      return currentFight;
+
+      return switchPokemon;
     } catch (error) {
       console.error("Can't switch pokemon", error);
       throw new InternalServerErrorException('Error switching pokemon');

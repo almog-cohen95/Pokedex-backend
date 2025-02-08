@@ -39,6 +39,25 @@ export class FightController {
   //   return result;
   // }
 
+    @Get('fainted')
+  async handleFainted() {
+    try {
+      // const result = await this.fightService.fightTurnManager();
+      // return result;
+       const currentFight = await this.fightService.getCurrentFight();
+
+      if (!currentFight || !currentFight[0]) {
+        throw new HttpException('No current fight found', HttpStatus.NOT_FOUND);
+      }
+      return currentFight;
+    } catch (error) {
+      throw new HttpException(
+        'Error processing turn',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('user-turn')
   async handleTurn() {
     try {

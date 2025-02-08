@@ -239,6 +239,10 @@ export class FightRepository {
           { $unwind: '$userPokemonData' },
           {
             $project: {
+              _id: 1,
+              isUserTurn: 1,
+              fainted: 1,
+              catch: 1,
               enemyPokemon: {
                 _id: '$enemyPokemonData._id',
                 name: '$enemyPokemonData.name',
@@ -254,9 +258,6 @@ export class FightRepository {
                 base: '$userPokemonData.base',
                 currentHP: '$userPokemon.currentHP',
               },
-              isUserTurn: 1,
-              fainted: 1,
-              catch: 1,
             },
           },
           { $limit: 1 },
@@ -324,38 +325,82 @@ export class FightRepository {
     }
   }
 
-
-
   async switchPokemon(userPokemonId: Types.ObjectId, selectedPokemon: Pokemon) {
     try {
       console.log('Finding fight with userPokemon._id:', userPokemonId);
 
-      const updatedFight = await this.fightModel.findOneAndUpdate(
+      const updateResult = await this.fightModel.updateOne(
         { 'userPokemon._id': userPokemonId },
         {
           $set: {
             'userPokemon._id': selectedPokemon._id,
-            'userPokemon.name': selectedPokemon.name,
-            'userPokemon.image': selectedPokemon.image,
-            'userPokemon.base': selectedPokemon.base,
             'userPokemon.currentHP': selectedPokemon.base.HP,
           },
         },
-        { new: true },
-      ).populate({
-      path: 'userPokemon._id',
-      model: 'Pokemon',
-      select: 'name image base'
-    });
+      );
 
-      if (!updatedFight) {
+      if (updateResult.matchedCount === 0) {
+        throw new Error('Fight not found after switching Pokémon.');
+      }
+      const updatedFight = await this.fightModel.aggregate([
+        {
+          $match: { 'userPokemon._id': selectedPokemon._id },
+        },
+        {
+          $lookup: {
+            from: 'pokemon',
+            localField: 'userPokemon._id',
+            foreignField: '_id',
+            as: 'userPokemonData',
+          },
+        },
+        { $unwind: '$userPokemonData' },
+        {
+          $lookup: {
+            from: 'pokemon',
+            localField: 'enemyPokemon._id',
+            foreignField: '_id',
+            as: 'enemyPokemonData',
+          },
+        },
+        { $unwind: '$enemyPokemonData' },
+        {
+            $lookup: {
+              from: 'pokemon',
+              localField: 'userPokemonsList',
+              foreignField: '_id',
+              as: 'userPokemonsListData',
+            },
+          },
+        {
+          $project: {
+            userPokemon: {
+              name: '$userPokemonData.name',
+              image: '$userPokemonData.image',
+              base: '$userPokemonData.base',
+              currentHP: '$userPokemon.currentHP',
+              _id: '$userPokemon._id',
+            },
+            enemyPokemon: {
+              name: '$enemyPokemonData.name',
+              image: '$enemyPokemonData.image',
+              base: '$enemyPokemonData.base',
+              currentHP: '$enemyPokemon.currentHP',
+              _id: '$enemyPokemon._id',
+            },
+          userPokemonsList: '$userPokemonsListData'
+          },
+        },
+      ]);
+
+      if (!updatedFight.length) {
         throw new Error('Fight not found after switching Pokémon.');
       }
 
       this.logger.log('Pokemon switched successfully', updatedFight);
 
       return {
-        fight: updatedFight,
+        fight: updatedFight[0],
       };
     } catch (error) {
       this.logger.error('Error random new enemy pokemon', error.stack);
