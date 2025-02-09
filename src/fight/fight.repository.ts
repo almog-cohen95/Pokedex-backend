@@ -55,7 +55,7 @@ export class FightRepository {
           currentHP: userPokemonDetails.currentHP,
         };
         existingFight.catchChance;
-        existingFight.isUserTurn;
+        existingFight.isUserTurn = true;
         existingFight.userPokemonsList;
         await existingFight.save();
       }
@@ -185,8 +185,67 @@ export class FightRepository {
         },
       );
 
-      this.logger.log('Fight updated successfully', result);
-      return result;
+              const fightData = await this.fightModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'pokemon',
+              localField: 'enemyPokemon._id',
+              foreignField: '_id',
+              as: 'enemyPokemonData',
+            },
+          },
+          { $unwind: '$enemyPokemonData' },
+          {
+            $lookup: {
+              from: 'pokemon',
+              localField: 'userPokemon._id',
+              foreignField: '_id',
+              as: 'userPokemonData',
+            },
+          },
+          { $unwind: '$userPokemonData' },
+          {
+            $lookup: {
+              from: 'pokemon',
+              localField: 'userPokemonsList',
+              foreignField: '_id',
+              as: 'userPokemonsListData',
+            },
+          },
+          {
+            $project: {
+              enemyPokemon: {
+                name: '$enemyPokemonData.name',
+                image: '$enemyPokemonData.image',
+                base: '$enemyPokemonData.base',
+                currentHP: '$enemyPokemon.currentHP',
+                profile: '$enemyPokemonData.profile',
+                type: '$enemyPokemonData.type',
+                species: '$enemyPokemonData.species',
+                isOwn: '$enemyPokemonData.isOwn',
+                _id: '$enemyPokemonData._id',
+              },
+              userPokemon: {
+                name: '$userPokemonData.name',
+                image: '$userPokemonData.image',
+                base: '$userPokemonData.base',
+                currentHP: '$userPokemon.currentHP',
+                _id: '$userPokemon._id',
+              },
+              userPokemonsList: '$userPokemonsListData',
+              fainted: 1,
+              catchChance: 1,
+            },
+          },
+          { $limit: 1 },
+        ])
+        .then((results) => results[0]);
+
+      return fightData;
+
+      // this.logger.log('Fight updated successfully', result);
+      // return result;
     } catch (error) {
       this.logger.error('Error updating fight:', error.stack);
       throw new Error('Database error while updating the fight');

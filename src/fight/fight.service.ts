@@ -64,6 +64,7 @@ export class FightService {
       if (currentFight.isUserTurn) {
         const attack = currentFight.userPokemon.base.Attack;
         const defense = currentFight.enemyPokemon.base.Defense;
+        // damage =55; 
         damage = Math.max(attack - defense, 5); 
         currentFight.enemyPokemon.currentHP = Math.max(
           currentFight.enemyPokemon.currentHP - damage,
@@ -89,6 +90,7 @@ export class FightService {
       await this.fightRepository.updateFight(currentFight);
 
       return {
+        currentFight,
         isUserTurn: currentFight.isUserTurn,
         enemyPokemonHP: currentFight.enemyPokemon.currentHP,
         userPokemonHP: currentFight.userPokemon.currentHP,

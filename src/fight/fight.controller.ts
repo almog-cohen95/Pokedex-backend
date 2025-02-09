@@ -62,7 +62,6 @@ export class FightController {
   async handleTurn() {
     try {
       const result = await this.fightService.fightTurnManager();
-      //  await this.pokemonService.getUserPokemonsList(isOwn);
       return result;
     } catch (error) {
       throw new HttpException(

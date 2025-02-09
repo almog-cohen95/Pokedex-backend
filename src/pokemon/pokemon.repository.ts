@@ -74,9 +74,9 @@ export class PokemonRepository {
           $facet: {
             enemyPokemon: [
               
-              // { $match: { isOwn: false } }, //TODO
-                { $match: { _id: new Types.ObjectId("67979cef3d952a17fe085426") } }, 
-              // { $sample: { size: 1 } },  //TODO
+              { $match: { isOwn: false } }, //TODO
+                // { $match: { _id: new Types.ObjectId("67979cef3d952a17fe085426") } }, 
+              { $sample: { size: 1 } },  //TODO
             ],
             userPokemonsList: [
               { $match: { isOwn: true } },
