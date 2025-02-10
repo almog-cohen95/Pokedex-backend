@@ -76,6 +76,7 @@ export class FightService {
         const attack = currentFight.enemyPokemon.base.Attack;
         const defense = currentFight.userPokemon.base.Defense;
         damage = Math.max(attack - defense, 5);
+        // damage = 1;
         currentFight.userPokemon.currentHP = Math.max(
           currentFight.userPokemon.currentHP - damage,
           0,
